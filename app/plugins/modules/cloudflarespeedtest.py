@@ -231,8 +231,8 @@ class CloudflareSpeedTest(_IPluginModule):
         CloudflareSpeedTest优选
         """
         self._cf_path = self.get_data_path()
-        self._ipv4 = os.path.join(self._cf_path, "ip.txt")
-        self._ipv6 = os.path.join(self._cf_path, "ipv6.txt")
+        self._cf_ipv4 = os.path.join(self._cf_path, "ip.txt")
+        self._cf_ipv6 = os.path.join(self._cf_path, "ipv6.txt")
         self._result_file = os.path.join(self._cf_path, "result_hosts.txt")
 
         # 获取自定义Hosts插件，若无设置则停止
@@ -452,8 +452,6 @@ class CloudflareSpeedTest(_IPluginModule):
             try:
                 # 解压
                 os.system(f'{unzip_command}')
-                # 赋权
-                os.system(f'chmod +x {self._cf_path}/{self._binary_name}')
                 # 删除压缩包
                 os.system(f'rm -rf {self._cf_path}/{cf_file_name}')
                 if Path(f'{self._cf_path}/{self._binary_name}').exists():
