@@ -21,6 +21,7 @@ from flask_compress import Compress
 from flask_login import LoginManager, login_user, login_required, current_user
 from flask_sock import Sock
 from icalendar import Calendar, Event, Alarm
+from simple_websocket import ConnectionClosed
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 import log
@@ -1737,7 +1738,11 @@ def message_handler(ws):
     消息中心WebSocket
     """
     while True:
-        data = ws.receive()
+        try:
+            data = ws.receive(timeout=10)
+        except ConnectionClosed:
+            print("WebSocket连接已关闭！")
+            break
         if not data:
             continue
         try:

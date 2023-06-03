@@ -7,7 +7,7 @@ import pytz
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from app.plugins import EventManager
+from app.plugins import EventManager, EventHandler
 from app.plugins.modules._base import _IPluginModule
 from app.utils import SystemUtils, RequestUtils, IpUtils
 from app.utils.types import EventType
@@ -479,6 +479,18 @@ class CloudflareSpeedTest(_IPluginModule):
                 self.error(f"CloudflareSpeedTest安装失败，无可用版本，停止运行")
                 os.removedirs(self._cf_path)
                 return False, None
+
+    @EventHandler.register(EventType.PluginReload)
+    def reload(self, event):
+        """
+        触发cf优选
+        """
+        plugin_id = event.event_data.get("plugin_id")
+        if not plugin_id:
+            return
+        if plugin_id != self.__class__.__name__:
+            return
+        self.__cloudflareSpeedTest()
 
     def __update_config(self):
         """

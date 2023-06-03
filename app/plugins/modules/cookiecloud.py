@@ -44,7 +44,6 @@ class CookieCloud(_IPluginModule):
     _server = None
     _key = None
     _password = None
-    _enabled = False
     # 任务执行间隔
     _cron = None
     _onlyonce = False
@@ -167,19 +166,11 @@ class CookieCloud(_IPluginModule):
                 if self._server.endswith("/"):
                     self._server = self._server[:-1]
 
-            # 测试
-            _, msg, flag = self.__download_data()
-            if flag:
-                self._enabled = True
-            else:
-                self._enabled = False
-                self.info(msg)
-
         # 停止现有任务
         self.stop_service()
 
         # 启动服务
-        if self._enabled:
+        if self.get_state():
             self._scheduler = BackgroundScheduler(timezone=Config().get_timezone())
 
             # 运行一次
@@ -211,7 +202,7 @@ class CookieCloud(_IPluginModule):
                 self._scheduler.start()
 
     def get_state(self):
-        return self._enabled and self._cron
+        return self._server and self._cron and self._key and self._password
 
     def __download_data(self) -> [dict, str, bool]:
         """

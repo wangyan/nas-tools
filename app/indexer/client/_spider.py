@@ -215,7 +215,7 @@ class TorrentSpider(feapder.AirSpider):
                             })
                         else:
                             params.update({
-                                "%s" % cat.get("id"): 1
+                                "cat%s" % cat.get("id"): 1
                             })
                 searchurl = self.domain + torrentspath + "?" + urlencode(params)
             else:

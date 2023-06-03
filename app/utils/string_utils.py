@@ -150,7 +150,11 @@ class StringUtils:
         if not text:
             return 0.0
         try:
-            float_val = float(text.strip().replace(',', ''))
+            text = text.strip().replace(',', '')
+            if text:
+                float_val = float(text)
+            else:
+                float_val = 0.0
         except Exception as e:
             ExceptionUtils.exception_traceback(e)
         return float_val
