@@ -6,6 +6,7 @@ from datetime import datetime
 from functools import lru_cache
 from random import choice
 from urllib import parse
+import log
 
 import requests
 
@@ -169,9 +170,12 @@ class DoubanApi(object):
 
         ts = params.pop('_ts', int(datetime.strftime(datetime.now(), '%Y%m%d')))
         params.update({'os_rom': 'android', 'apiKey': cls._api_key, '_ts': ts, '_sig': cls.__sign(url=req_url, ts=ts)})
+        # log.info('params: %s' % (params))
 
         headers = {'User-Agent': choice(cls._user_agents)}
+        # log.info('headers %s, url %s, %s' % (headers, req_url, cls._session))
         resp = RequestUtils(headers=headers, session=cls._session).get_res(url=req_url, params=params)
+        # log.info('resp: %s' % (resp.json()))
 
         return resp.json() if resp else {}
 
@@ -232,11 +236,27 @@ class DoubanApi(object):
     def movie_top250(self, start=0, count=20, ts=datetime.strftime(datetime.now(), '%Y%m%d')):
         return self.__invoke(self._urls["movie_top250"], start=start, count=count, _ts=ts)
 
-    def movie_recommend(self, tags='', sort='R', start=0, count=20, ts=datetime.strftime(datetime.now(), '%Y%m%d')):
-        return self.__invoke(self._urls["movie_recommend"], tags=tags, sort=sort, start=start, count=count, _ts=ts)
+    def movie_recommend(
+            self, tags='', sort='R', region='', period='', start=0, count=20, ts=datetime.strftime(
+                datetime.now(),
+                '%Y%m%d')):
+        tags = [tags, region, period]
+        tags = [tag for tag in tags if tag != '' and tag is not None]
+        tags = ','.join(tags)
+        return self.__invoke(
+            self._urls["movie_recommend"],
+            tags=tags, sort=sort, start=start, count=count, _ts=ts)
 
-    def tv_recommend(self, tags='', sort='R', start=0, count=20, ts=datetime.strftime(datetime.now(), '%Y%m%d')):
-        return self.__invoke(self._urls["tv_recommend"], tags=tags, sort=sort, start=start, count=count, _ts=ts)
+    def tv_recommend(
+            self, tags='', sort='R', region='', period='', start=0, count=20, ts=datetime.strftime(
+                datetime.now(),
+                '%Y%m%d')):
+        tags = [tags, region, period]
+        tags = [tag for tag in tags if tag != '' and tag is not None]
+        tags = ','.join(tags)
+        return self.__invoke(
+            self._urls["tv_recommend"],
+            tags=tags, sort=sort, start=start, count=count, _ts=ts)
 
     def tv_chinese_best_weekly(self, start=0, count=20, ts=datetime.strftime(datetime.now(), '%Y%m%d')):
         return self.__invoke(self._urls["tv_chinese_best_weekly"], start=start, count=count, _ts=ts)

@@ -2378,10 +2378,16 @@ class WebAction:
             sort = params.get("sort") or "R"
             # 选中的分类
             tags = params.get("tags") or ""
+            # 选中的地区
+            region = params.get("region") or ""
+            # 选中的年代
+            period = params.get("period") or ""
             # 过滤参数
             res_list = DouBan().get_douban_disover(mtype=mtype,
                                                    sort=sort,
                                                    tags=tags,
+                                                   region=region,
+                                                   period=period,
                                                    page=CurrentPage)
 
         # 补充存在与订阅状态

@@ -52,7 +52,7 @@ class Logger:
                 if not os.path.exists(logpath):
                     os.makedirs(logpath)
                 log_file_handler = RotatingFileHandler(filename=os.path.join(logpath, module + ".txt"),
-                                                       maxBytes=5 * 1024 * 1024,
+                                                       maxBytes=30 * 1024 * 1024,
                                                        backupCount=3,
                                                        encoding='utf-8')
                 log_file_handler.setFormatter(logging.Formatter('%(asctime)s\t%(levelname)s: %(message)s'))
