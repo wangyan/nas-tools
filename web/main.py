@@ -21,6 +21,7 @@ from flask_compress import Compress
 from flask_login import LoginManager, login_user, login_required, current_user
 from flask_sock import Sock
 from icalendar import Calendar, Event, Alarm
+from simple_websocket import ConnectionClosed
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 import log
@@ -390,7 +391,7 @@ def sites():
 @App.route('/sitelist', methods=['POST', 'GET'])
 @login_required
 def sitelist():
-    IndexerSites = Indexer().get_indexers(check=False)
+    IndexerSites = Indexer().get_indexer_dict(check=False)
     return render_template("site/sitelist.html",
                            Sites=IndexerSites,
                            Count=len(IndexerSites))
@@ -401,22 +402,23 @@ def sitelist():
 def open_app():
     return render_template("openapp.html")
 
+
 # 站点资源页面
 @App.route('/resources', methods=['POST', 'GET'])
 @login_required
 def resources():
-    site_id = request.args.get("site")
+    site_domain = request.args.get("site")
     site_name = request.args.get("title")
     page = request.args.get("page") or 0
     keyword = request.args.get("keyword")
     Results = WebAction().list_site_resources({
-        "id": site_id,
+        "site": site_domain,
         "page": page,
         "keyword": keyword
     }).get("data") or []
     return render_template("site/resources.html",
                            Results=Results,
-                           SiteId=site_id,
+                           SiteDomain=site_domain,
                            Title=site_name,
                            KeyWord=keyword,
                            TotalCount=len(Results),
@@ -1678,6 +1680,7 @@ def stream_logging():
     """
     实时日志EventSources响应
     """
+
     def __logging(_source=""):
         """
         实时日志
@@ -1711,6 +1714,7 @@ def stream_progress():
     """
     实时日志EventSources响应
     """
+
     def __progress(_type):
         """
         实时日志
@@ -1734,7 +1738,11 @@ def message_handler(ws):
     消息中心WebSocket
     """
     while True:
-        data = ws.receive()
+        try:
+            data = ws.receive(timeout=10)
+        except ConnectionClosed:
+            print("WebSocket连接已关闭！")
+            break
         if not data:
             continue
         try:

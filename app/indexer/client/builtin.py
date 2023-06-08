@@ -4,7 +4,7 @@ import time
 
 import log
 from app.conf import SystemConfig
-from app.helper import IndexerHelper, IndexerConf, ProgressHelper, ChromeHelper, DbHelper
+from app.helper import ProgressHelper, ChromeHelper, DbHelper
 from app.indexer.client._base import _IIndexClient
 from app.indexer.client._rarbg import Rarbg
 from app.indexer.client._render_spider import RenderSpider
@@ -15,6 +15,7 @@ from app.sites import Sites
 from app.utils import StringUtils
 from app.utils.types import SearchType, IndexerType, ProgressKey, SystemConfigKey
 from config import Config
+from web.backend.user import User
 
 
 class BuiltinIndexer(_IIndexClient):
@@ -31,6 +32,9 @@ class BuiltinIndexer(_IIndexClient):
     progress = None
     sites = None
     dbhelper = None
+    user = None
+    chromehelper = None
+    systemconfig = None
 
     def __init__(self, config=None):
         super().__init__()
@@ -41,6 +45,9 @@ class BuiltinIndexer(_IIndexClient):
         self.sites = Sites()
         self.progress = ProgressHelper()
         self.dbhelper = DbHelper()
+        self.user = User()
+        self.chromehelper = ChromeHelper()
+        self.systemconfig = SystemConfig()
         self._show_more_sites = Config().get_config("laboratory").get('show_more_sites')
 
     @classmethod
@@ -57,33 +64,51 @@ class BuiltinIndexer(_IIndexClient):
         """
         return True
 
-    def get_indexers(self, check=True, indexer_id=None, public=True):
-        ret_indexers = []
-        # 选中站点配置
-        indexer_sites = SystemConfig().get(SystemConfigKey.UserIndexerSites) or []
-        _indexer_domains = []
+    def get_indexer(self, url):
+        """
+        获取单个索引器配置
+        """
         # 检查浏览器状态
-        chrome_ok = ChromeHelper().get_status()
+        chrome_ok = self.chromehelper.get_status()
+        site = self.sites.get_sites(siteurl=url)
+        if site:
+            return self.user.get_indexer(url=url,
+                                         siteid=site.get("id"),
+                                         cookie=site.get("cookie"),
+                                         ua=site.get("ua"),
+                                         name=site.get("name"),
+                                         rule=site.get("rule"),
+                                         pri=site.get('pri'),
+                                         public=False,
+                                         proxy=site.get("proxy"),
+                                         render=False if not chrome_ok else site.get("chrome"))
+        return None
+
+    def get_indexers(self, check=True, public=True):
+        ret_indexers = []
+        _indexer_domains = []
+        # 选中站点配置
+        indexer_sites = self.systemconfig.get(SystemConfigKey.UserIndexerSites) or []
+        # 检查浏览器状态
+        chrome_ok = self.chromehelper.get_status()
         # 私有站点
-        for site in Sites().get_sites():
+        for site in self.sites.get_sites():
             url = site.get("signurl") or site.get("rssurl")
             cookie = site.get("cookie")
             if not url or not cookie:
                 continue
             render = False if not chrome_ok else site.get("chrome")
-            indexer = IndexerHelper().get_indexer(url=url,
-                                                  siteid=site.get("id"),
-                                                  cookie=cookie,
-                                                  ua=site.get("ua"),
-                                                  name=site.get("name"),
-                                                  rule=site.get("rule"),
-                                                  pri=site.get('pri'),
-                                                  public=False,
-                                                  proxy=site.get("proxy"),
-                                                  render=render)
+            indexer = self.user.get_indexer(url=url,
+                                            siteid=site.get("id"),
+                                            cookie=cookie,
+                                            ua=site.get("ua"),
+                                            name=site.get("name"),
+                                            rule=site.get("rule"),
+                                            pri=site.get('pri'),
+                                            public=False,
+                                            proxy=site.get("proxy"),
+                                            render=render)
             if indexer:
-                if indexer_id and indexer.id == indexer_id:
-                    return indexer
                 if check and (not indexer_sites or indexer.id not in indexer_sites):
                     continue
                 if indexer.domain not in _indexer_domains:
@@ -92,17 +117,14 @@ class BuiltinIndexer(_IIndexClient):
                     ret_indexers.append(indexer)
         # 公开站点
         if public and self._show_more_sites:
-            for indexer in IndexerHelper().get_all_indexers():
-                if not indexer.get("public"):
+            for site_url in self.user.get_public_sites():
+                indexer = self.user.get_indexer(url=site_url)
+                if check and (not indexer_sites or indexer.id not in indexer_sites):
                     continue
-                if indexer_id and indexer.get("id") == indexer_id:
-                    return IndexerConf(datas=indexer)
-                if check and (not indexer_sites or indexer.get("id") not in indexer_sites):
-                    continue
-                if indexer.get("domain") not in _indexer_domains:
-                    _indexer_domains.append(indexer.get("domain"))
-                    ret_indexers.append(IndexerConf(datas=indexer))
-        return None if indexer_id else ret_indexers
+                if indexer.domain not in _indexer_domains:
+                    _indexer_domains.append(indexer.domain)
+                    ret_indexers.append(indexer)
+        return ret_indexers
 
     def search(self, order_seq,
                indexer,
@@ -191,13 +213,13 @@ class BuiltinIndexer(_IIndexClient):
                                               match_media=match_media,
                                               start_time=start_time)
 
-    def list(self, index_id, page=0, keyword=None):
+    def list(self, url, page=0, keyword=None):
         """
         根据站点ID搜索站点首页资源
         """
-        if not index_id:
+        if not url:
             return []
-        indexer: IndexerConf = self.get_indexers(indexer_id=index_id)
+        indexer = self.get_indexer(url)
         if not indexer:
             return []
 

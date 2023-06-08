@@ -50,15 +50,25 @@ class Indexer(object):
             return []
         return self._client.get_indexers(check=check)
 
-    def get_user_indexer_dict(self):
+    def get_indexer(self, url):
+        """
+        获取索引器的信息
+        """
+        if not self._client:
+            return None
+        return self._client.get_indexer(url)
+
+    def get_indexer_dict(self, check=True):
         """
         获取用户已经选择的索引器字典
         """
         return [
             {
                 "id": index.id,
-                "name": index.name
-            } for index in self.get_indexers(check=True)
+                "name": index.name,
+                "domain": StringUtils.get_url_domain(index.domain),
+                "public": index.public,
+            } for index in self.get_indexers(check=check)
         ]
 
     def get_indexer_hash_dict(self):
@@ -81,14 +91,14 @@ class Indexer(object):
         """
         return [indexer.name for indexer in self.get_indexers(check=True)]
 
-    def list_resources(self, index_id, page=0, keyword=None):
+    def list_resources(self, url, page=0, keyword=None):
         """
         获取内置索引器的资源列表
-        :param index_id: 内置站点ID
+        :param url: 站点URL
         :param page: 页码
         :param keyword: 搜索关键字
         """
-        return self._client.list(index_id=index_id, page=page, keyword=keyword)
+        return self._client.list(url=url, page=page, keyword=keyword)
 
     def __get_client(self, ctype: [IndexerType, str], conf=None):
         return self.__build_class(ctype=ctype, conf=conf)

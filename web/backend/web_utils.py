@@ -55,7 +55,7 @@ class WebUtils:
         try:
             releases_update_only = Config().get_config("app").get("releases_update_only")
             version_res = RequestUtils(proxies=Config().get_proxies()).get_res(
-                f"https://nastool.cn/{quote(WebUtils.get_current_version())}/update")
+                f"https://nastool.org/{quote(WebUtils.get_current_version())}/update")
             if version_res:
                 ver_json = version_res.json()
                 version = ver_json.get("latest")

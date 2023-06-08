@@ -7,7 +7,7 @@ import pytz
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from app.plugins import EventManager
+from app.plugins import EventManager, EventHandler
 from app.plugins.modules._base import _IPluginModule
 from app.utils import SystemUtils, RequestUtils, IpUtils
 from app.utils.types import EventType
@@ -231,8 +231,8 @@ class CloudflareSpeedTest(_IPluginModule):
         CloudflareSpeedTest优选
         """
         self._cf_path = self.get_data_path()
-        self._ipv4 = os.path.join(self._cf_path, "ip.txt")
-        self._ipv6 = os.path.join(self._cf_path, "ipv6.txt")
+        self._cf_ipv4 = os.path.join(self._cf_path, "ip.txt")
+        self._cf_ipv6 = os.path.join(self._cf_path, "ipv6.txt")
         self._result_file = os.path.join(self._cf_path, "result_hosts.txt")
 
         # 获取自定义Hosts插件，若无设置则停止
@@ -452,8 +452,6 @@ class CloudflareSpeedTest(_IPluginModule):
             try:
                 # 解压
                 os.system(f'{unzip_command}')
-                # 赋权
-                os.system(f'chmod +x {self._cf_path}/{self._binary_name}')
                 # 删除压缩包
                 os.system(f'rm -rf {self._cf_path}/{cf_file_name}')
                 if Path(f'{self._cf_path}/{self._binary_name}').exists():
@@ -481,6 +479,18 @@ class CloudflareSpeedTest(_IPluginModule):
                 self.error(f"CloudflareSpeedTest安装失败，无可用版本，停止运行")
                 os.removedirs(self._cf_path)
                 return False, None
+
+    @EventHandler.register(EventType.PluginReload)
+    def reload(self, event):
+        """
+        触发cf优选
+        """
+        plugin_id = event.event_data.get("plugin_id")
+        if not plugin_id:
+            return
+        if plugin_id != self.__class__.__name__:
+            return
+        self.__cloudflareSpeedTest()
 
     def __update_config(self):
         """
