@@ -21,11 +21,11 @@ NAStools 官方项目文件备份。
 ## 重要说明
 
   1. 本镜像是官方源码备份，未作任何修改。  
-  2. 需要安装 `v2.9.1` 版本，请将 `jxxghp/nas-tools:latest` 换成 `nastools/nas-tools:2.9.1`  
-  3. 需要安装 `v3.2.2` 版本，请将 `jxxghp/nas-tools:latest` 换成 `nastools/nas-tools:3.2.2`
-  4. DOCKER安装，记得将 `REPO_URL` 换成 `https://github.com/wangyan/nas-tools.git`    
+  2. 需要安装 `v2.9.1` 版本，请将 `jxxghp/nas-tools:latest` 换成 `ysx88/nas-tools:2.9.1`  
+  3. 需要安装 `v3.2.2` 版本，请将 `jxxghp/nas-tools:latest` 换成 `ysx88/nas-tools:3.2.2`
+  4. DOCKER安装，记得将 `REPO_URL` 换成 `https://github.com/ysx88/nas-tools.git`    
 
 ## 项目网址
 
-源码地址：<https://github.com/wangyan/nas-tools>  
-镜像地址：<https://hub.docker.com/r/nastools/nas-tools>  
+源码地址：<https://github.com/ysx88/nas-tools>  
+镜像地址：<https://hub.docker.com/r/ysx88/nas-tools>  
